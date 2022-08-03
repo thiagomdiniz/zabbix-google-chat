@@ -39,7 +39,7 @@ class ChatSender:
                 self.zabbix_url = cp['zabbix']['host']
                 self.datafile = cp['zabbix']['datafile']
             if cp.has_section('chat'):
-              self.webhook = cp['chat'][webhook_name]
+                self.webhook = cp['chat'][webhook_name]
         except:
             print('Falha na leitura do arquivo de configuracao')
 
