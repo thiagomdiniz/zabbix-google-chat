@@ -6,6 +6,7 @@ import json
 import sys
 import datetime
 import configparser
+import urllib.parse
 
 #
 # Google Chat API
@@ -23,6 +24,12 @@ class ChatSender:
     PROBLEM_IMG = 'https://png.pngtree.com/svg/20161208/status_warning_336325.png'
     ACK_IMG = 'https://static1.squarespace.com/static/549db876e4b05ce481ee4649/t/54a47a31e4b0375c08400709/1472574912591/form-3.png'
     RESOLVED_IMG = 'https://image.flaticon.com/icons/png/128/291/291201.png'
+
+    # Choose one redirect option to allow the "View event in Zabbix" button
+    # to open the event in case your Zabbix frontend is not secure (https)
+    # See https://github.com/thiagomdiniz/zabbix-google-chat/issues/8
+    HTTP_REDIRECT = 'https://httpbin.org/redirect-to?url='
+    #HTTP_REDIRECT = 'https://www.google.com/url?q='
 
     def __init__(self, webhook_name):
         cp = configparser.RawConfigParser()
@@ -120,7 +127,7 @@ class ChatSender:
                         { "text": "Ver o evento no ZABBIX",
                           "onClick": {
                             "openLink": {
-                              "url": self.zabbix_url + "/tr_events.php?triggerid=" + self.trigger_id + "&eventid=" + self.event_id
+                              "url": self.getZabbixEventUrl()
                             }
                           }
                         }
@@ -183,7 +190,7 @@ class ChatSender:
                         { "text": "Ver o evento no ZABBIX",
                           "onClick": {
                             "openLink": {
-                              "url": self.zabbix_url + "/tr_events.php?triggerid=" + self.trigger_id + "&eventid=" + self.event_id
+                              "url": self.getZabbixEventUrl()
                             }
                           }
                         }
@@ -230,6 +237,15 @@ class ChatSender:
             content[self.trigger_id] = event_thread[self.trigger_id]
             with open(self.datafile, 'w') as f:
                 json.dump(content, f)
+    
+    # Metodo que monta url do evento, tratando http/https
+    def getZabbixEventUrl(self):
+      url = self.zabbix_url + "/tr_events.php?triggerid=" + self.trigger_id + "&eventid=" + self.event_id
+      
+      if url.startswith('http:'):
+        url = self.HTTP_REDIRECT + urllib.parse.quote(url, safe='')
+      
+      return url
 
 
 if __name__ == '__main__':
